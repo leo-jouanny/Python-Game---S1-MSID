@@ -86,13 +86,18 @@ def main():
     arche_magique = Arme("Arche Magique", 10, 3)
     hache = Arme("Hache", 12, 3)
     baton_feu = Arme("Baton de Feu", 15, 4)
+    tueuse_dragon = Arme("Tueuse de Dragon", 1000, 1)  # Arme spéciale pour tuer le dragon
     
     ennemis = [
         PNJ("Squelette", 50, 7),
         PNJ("Zombie", 70, 9),
         PNJ("Slime", 30, 5),
         PNJ("Gobelin", 40, 8),
-        PNJ("Dragon", 100, 15)
+        PNJ("Dragon", 100, 15),
+        PNJ("Loup", 60, 12),
+        PNJ("Fantôme", 45, 6),
+        PNJ("Orc", 80, 10),
+        PNJ("Guerrier Sombre", 90, 14)
     ]
     
     zones = [(ennemi, ennemi.nom) for ennemi in ennemis]  # Liste contenant les ennemis et leurs noms
@@ -127,6 +132,7 @@ def main():
             print("- Arche Magique (10 dégâts, 3 tours) - 20 pièces d'or")
             print("- Hache (12 dégâts, 3 tours) - 25 pièces d'or")
             print("- Baton de Feu (15 dégâts, 4 tours) - 30 pièces d'or")
+            print("- Tueuse de Dragon (tue le dragon d'un coup) - 50 pièces d'or")
             achat = input("Que voulez-vous acheter (ou rien) ? ")
             if achat == "Epée":
                 if gold >= 5:
@@ -176,6 +182,16 @@ def main():
                         player.acheter_arme(baton_feu)
                         gold -= 10  # Déduire le coût de l'arme achetée
                         print(f"Vous avez acheté le Baton de Feu! Il vous reste {gold} pièces d'or.")
+                else:
+                    print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
+            elif achat == "Tueuse de Dragon":
+                if gold >= 35:
+                    if player.arme:
+                        print("Vous avez déjà une arme équipée!")
+                    else:
+                        player.acheter_arme(tueuse_dragon)
+                        gold -= 35  # Déduire le coût de l'arme achetée
+                        print(f"Vous avez acheté la Tueuse de Dragon! Il vous reste {gold} pièces d'or.")
                 else:
                     print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
             elif achat:
