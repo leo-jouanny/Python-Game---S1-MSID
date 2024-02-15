@@ -84,10 +84,19 @@ def main():
     epee = Arme("Epée", 5, 3)
     marteau = Arme("Marteau", 8, 2)
     arche_magique = Arme("Arche Magique", 10, 3)
-    squelette = PNJ("Squelette", 50, 7)
-    zombie = PNJ("Zombie", 70, 9)
-    slime = PNJ("Slime",30, 5)
-    ennemi = None
+    hache = Arme("Hache", 12, 3)
+    baton_feu = Arme("Baton de Feu", 15, 4)
+    
+    ennemis = [
+        PNJ("Squelette", 50, 7),
+        PNJ("Zombie", 70, 9),
+        PNJ("Slime", 30, 5),
+        PNJ("Gobelin", 40, 8),
+        PNJ("Dragon", 100, 15)
+    ]
+    
+    zones = [(ennemi, ennemi.nom) for ennemi in ennemis]  # Liste contenant les ennemis et leurs noms
+    
     gold = 0
 
     while True:
@@ -101,47 +110,72 @@ def main():
         action = input("> ")
         
         if action == "1":
-            if random.randint(1, 2) == 1:
-                print("Vous rencontrez un squelette!")
-                ennemi = squelette
+            print("Choisissez une zone à explorer:")
+            for i, (_, zone_nom) in enumerate(zones, 1):
+                print(f"{i}. {zone_nom}")
+            choix_zone = int(input("> "))
+            if 1 <= choix_zone <= len(zones):
+                zone_attaquee, _ = zones[choix_zone - 1]
+                print(f"Vous explorez {zone_attaquee.nom}!")
             else:
-                print("Vous rencontrez un zombie!")
-                ennemi = zombie
+                print("Zone invalide!")
                 
         elif action == "2":
             print("Armes disponibles:")
             print("- Epée (5 dégâts, 3 tours) - 10 pièces d'or")  
             print("- Marteau (8 dégâts, 2 tours) - 15 pièces d'or")
             print("- Arche Magique (10 dégâts, 3 tours) - 20 pièces d'or")
+            print("- Hache (12 dégâts, 3 tours) - 25 pièces d'or")
+            print("- Baton de Feu (15 dégâts, 4 tours) - 30 pièces d'or")
             achat = input("Que voulez-vous acheter (ou rien) ? ")
             if achat == "Epée":
-                if gold >= 10:
+                if gold >= 5:
                     if player.arme:
                         print("Vous avez déjà une arme équipée!")
                     else:
                         player.acheter_arme(epee)
-                        gold -= 10  # Déduire le coût de l'arme achetée
+                        gold -= 5  # Déduire le coût de l'arme achetée
                         print(f"Vous avez acheté l'épée! Il vous reste {gold} pièces d'or.")
                 else:
                     print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
             elif achat == "Marteau":
-                if gold >= 15:
+                if gold >= 3:
                     if player.arme:
                         print("Vous avez déjà une arme équipée!")
                     else:
                         player.acheter_arme(marteau)
-                        gold -= 15  # Déduire le coût de l'arme achetée
+                        gold -= 3  # Déduire le coût de l'arme achetée
                         print(f"Vous avez acheté le marteau! Il vous reste {gold} pièces d'or.")
                 else:
                     print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
             elif achat == "Arche Magique":
-                if gold >= 20:
+                if gold >= 5:
                     if player.arme:
                         print("Vous avez déjà une arme équipée!")
                     else:
                         player.acheter_arme(arche_magique)
-                        gold -= 20  # Déduire le coût de l'arme achetée
+                        gold -= 5  # Déduire le coût de l'arme achetée
                         print(f"Vous avez acheté l'Arche Magique! Il vous reste {gold} pièces d'or.")
+                else:
+                    print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
+            elif achat == "Hache":
+                if gold >= 7:
+                    if player.arme:
+                        print("Vous avez déjà une arme équipée!")
+                    else:
+                        player.acheter_arme(hache)
+                        gold -= 7  # Déduire le coût de l'arme achetée
+                        print(f"Vous avez acheté la Hache! Il vous reste {gold} pièces d'or.")
+                else:
+                    print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
+            elif achat == "Baton de Feu":
+                if gold >= 10:
+                    if player.arme:
+                        print("Vous avez déjà une arme équipée!")
+                    else:
+                        player.acheter_arme(baton_feu)
+                        gold -= 10  # Déduire le coût de l'arme achetée
+                        print(f"Vous avez acheté le Baton de Feu! Il vous reste {gold} pièces d'or.")
                 else:
                     print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
             elif achat:
@@ -151,17 +185,25 @@ def main():
             player.potion_magique()
             
         elif action == "4":
-            if ennemi:
-                player.subi(ennemi)
-                if ennemi.subi(player):
-                    print("Vous avez vaincu le monstre!")
-                    ennemi = None
+            if choix_zone:  # Si le joueur a sélectionné une zone valide
+                zone_attaquee, _ = zones[choix_zone - 1]
+                player.subi(zone_attaquee)
+                if zone_attaquee.subi(player):
+                    print(f"Vous avez vaincu le {zone_attaquee.nom}!")
+                    zones[choix_zone - 1] = None
                     gold += 5  # Le joueur gagne 5 pièces d'or
                     print(f"Vous avez gagné 5 pièces d'or! Total: {gold}")
+                    # Permet de changer de zone après la victoire contre un ennemi
+                    zones = [(ennemi, ennemi.nom) for ennemi in ennemis if ennemi != zone_attaquee]
+                    if zones:  # Si des zones avec des ennemis restent
+                        print("Choisissez une autre zone à explorer pour continuer votre aventure.")
+                    else:
+                        print("Vous avez vaincu tous les ennemis!")
+                        break
                 else:
-                    print("Le combat continue!")
+                    print(f"Le combat contre le {zone_attaquee.nom} continue!")
             else:
-                print("Aucun monstre à attaquer!")
+                print("Vous devez explorer une zone avant d'attaquer un monstre!")
                 
         elif action == "5":
             print("Vous quittez le donjon, à bientôt!")
