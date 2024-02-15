@@ -1,0 +1,174 @@
+import random
+
+class Carte:
+    def __init__(self, taille_x, taille_y):
+        self.taille_x = taille_x
+        self.taille_y = taille_y
+        self.map = [[random.choice(['.', '#']) for _ in range(taille_x)] for _ in range(taille_y)]
+
+    def afficher_carte(self):
+        for ligne in self.map:
+            print(' '.join(ligne))
+
+class Combattant:
+    def __init__(self, pseudo, pv, attaque):
+        self.pseudo = pseudo
+        self.pv = pv
+        self.attaque = attaque
+        self.arme = None
+
+    def subi(self, ennemi):
+        degats_subis = ennemi.attaque
+        if self.arme:
+            degats_subis -= self.arme.degats_supplementaires
+        self.pv -= degats_subis
+        print(f"{self.pseudo} subit {degats_subis} de dégâts. Il lui reste {self.pv} PV.")
+
+    def acheter_arme(self, arme):
+        self.arme = arme
+        print(f"{self.pseudo} a acheté {arme.nom} qui fait {arme.degats_supplementaires} dégâts supplémentaires pendant {arme.duree} tours.")
+
+    def potion_magique(self):
+        chance = random.randint(1, 100)
+        if chance <= 70:
+            vie_gagnee = 15  # Modification ici pour régénérer 15 PV
+            self.pv += vie_gagnee
+            print(f"{self.pseudo} utilise une potion magique et récupère {vie_gagnee} PV.")
+
+class Arme:
+    def __init__(self, nom, degats_supplementaires, duree):
+        self.nom = nom
+        self.degats_supplementaires = degats_supplementaires
+        self.duree = duree
+
+class PNJ:
+    def __init__(self, nom, pv, attaque):
+        self.nom = nom
+        self.pv = pv
+        self.attaque = attaque
+
+    def subi(self, combattant):
+        self.pv -= combattant.attaque
+        print(f"{self.nom} subit {combattant.attaque} de dégâts. Il lui reste {self.pv} PV.")
+        return self.pv <= 0
+
+def choose_character():
+    print("Choose your character:")
+    print("1. Warrior (high HP, low attack)")
+    print("2. Mage (low HP, high attack)")
+    print("3. Archer (medium HP, medium attack)")
+    
+    choice = input("> ")
+    
+    if choice == "1":
+        return Combattant("Warrior", 100, 10)
+    elif choice == "2": 
+        return Combattant("Mage", 70, 15)
+    elif choice == "3":
+        return Combattant("Archer", 85, 12)
+    else:
+        print("Invalid choice, defaulting to Warrior")
+        return Combattant("Warrior", 100, 10)
+
+def main():
+    print("Bienvenue dans le donjon!")
+    
+    # Créer une carte
+    carte = Carte(10, 10)
+    print("Voici la carte du donjon:")
+    carte.afficher_carte()
+    
+    player = choose_character()
+    print(f"You have chosen to play as the {player.pseudo}")
+    
+    epee = Arme("Epée", 5, 3)
+    marteau = Arme("Marteau", 8, 2)
+    arche_magique = Arme("Arche Magique", 10, 3)
+    squelette = PNJ("Squelette", 50, 7)
+    zombie = PNJ("Zombie", 70, 9)
+    slime = PNJ("Slime",30, 5)
+    ennemi = None
+    gold = 0
+
+    while True:
+        print("\nQue voulez-vous faire?")
+        print("1. Explorer")
+        print("2. Acheter arme")
+        print("3. Utiliser potion")
+        print("4. Attaquer monstre")
+        print("5. Quitter donjon")
+        
+        action = input("> ")
+        
+        if action == "1":
+            if random.randint(1, 2) == 1:
+                print("Vous rencontrez un squelette!")
+                ennemi = squelette
+            else:
+                print("Vous rencontrez un zombie!")
+                ennemi = zombie
+                
+        elif action == "2":
+            print("Armes disponibles:")
+            print("- Epée (5 dégâts, 3 tours) - 10 pièces d'or")  
+            print("- Marteau (8 dégâts, 2 tours) - 15 pièces d'or")
+            print("- Arche Magique (10 dégâts, 3 tours) - 20 pièces d'or")
+            achat = input("Que voulez-vous acheter (ou rien) ? ")
+            if achat == "Epée":
+                if gold >= 10:
+                    if player.arme:
+                        print("Vous avez déjà une arme équipée!")
+                    else:
+                        player.acheter_arme(epee)
+                        gold -= 10  # Déduire le coût de l'arme achetée
+                        print(f"Vous avez acheté l'épée! Il vous reste {gold} pièces d'or.")
+                else:
+                    print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
+            elif achat == "Marteau":
+                if gold >= 15:
+                    if player.arme:
+                        print("Vous avez déjà une arme équipée!")
+                    else:
+                        player.acheter_arme(marteau)
+                        gold -= 15  # Déduire le coût de l'arme achetée
+                        print(f"Vous avez acheté le marteau! Il vous reste {gold} pièces d'or.")
+                else:
+                    print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
+            elif achat == "Arche Magique":
+                if gold >= 20:
+                    if player.arme:
+                        print("Vous avez déjà une arme équipée!")
+                    else:
+                        player.acheter_arme(arche_magique)
+                        gold -= 20  # Déduire le coût de l'arme achetée
+                        print(f"Vous avez acheté l'Arche Magique! Il vous reste {gold} pièces d'or.")
+                else:
+                    print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
+            elif achat:
+                print("Arme inconnue!")
+                
+        elif action == "3":
+            player.potion_magique()
+            
+        elif action == "4":
+            if ennemi:
+                player.subi(ennemi)
+                if ennemi.subi(player):
+                    print("Vous avez vaincu le monstre!")
+                    ennemi = None
+                    gold += 5  # Le joueur gagne 5 pièces d'or
+                    print(f"Vous avez gagné 5 pièces d'or! Total: {gold}")
+                else:
+                    print("Le combat continue!")
+            else:
+                print("Aucun monstre à attaquer!")
+                
+        elif action == "5":
+            print("Vous quittez le donjon, à bientôt!")
+            break
+            
+        else:
+            print("Action invalide!")
+            
+if __name__ == "__main__":
+    main()
