@@ -20,8 +20,7 @@ class Combattant:
         self.niveau = 1  # Niveau initial
         self.experience = 0  # Expérience initiale
 
-
-    def subi(self, ennemi):
+    def subir(self, ennemi):
         degats_subis = ennemi.attaque
         if self.arme:
             degats_subis -= self.arme.degats_supplementaires
@@ -68,10 +67,14 @@ class PNJ:
         self.nom = nom
         self.pv = pv
         self.attaque = attaque
-
-    def subi(self, combattant):
-        self.pv -= combattant.attaque
-        print(f"{self.nom} subit {combattant.attaque} de dégâts. Il lui reste {self.pv} PV.")
+        
+    def subir(self, combattant):
+        if combattant.arme and combattant.arme.nom == "Tueuse de Dragon":
+            degats_subis = self.pv  # Les dégâts subis par l'ennemi sont égaux à ses points de vie restants
+        else:
+            degats_subis = combattant.attaque
+        self.pv -= degats_subis
+        print(f"{self.nom} subit {degats_subis} de dégâts. Il lui reste {self.pv} PV.")
         return self.pv <= 0
 
 def choose_character():
@@ -101,7 +104,7 @@ class EnnemiPuissant:
         self.pv = pv
         self.attaque = attaque
 
-    def subi(self, combattant):
+    def subir(self, combattant):
         self.pv -= combattant.attaque
         print(f"{self.nom} subit {combattant.attaque} de dégâts. Il lui reste {self.pv} PV.")
         return self.pv <= 0    
@@ -267,7 +270,7 @@ def main():
                 elif achat:
                     print("Compétence magique inconnue!")
             else:
-                print("Vous n'avez pas accès à cette fonctionnalité!")
+                print("Vous n'avez pas accès à cette fonctionnalité! Seul le Mage peut y accéder")
             
         elif action == "4":
             player.potion_magique()
@@ -275,9 +278,12 @@ def main():
         elif action == "5":
             if choix_zone:  # Si le joueur a sélectionné une zone valide
                 zone_attaquee, _ = zones[choix_zone - 1]
-                player.subi(zone_attaquee)
-                if zone_attaquee.subi(player):
+                player.subir(zone_attaquee)
+                if zone_attaquee.subir(player):
                     print(f"Vous avez vaincu le {zone_attaquee.nom}!")
+                    if zone_attaquee.nom == "Dragon Ancien":  # Si le joueur a vaincu le Dragon Ancien
+                        print("Félicitations! Vous avez terminé le jeu en vainquant le Boss du Jeu")
+                        break  # Sortir de la boucle pour terminer le jeu
                     zones[choix_zone - 1] = None
                     gold += 5  # Le joueur gagne 5 pièces d'or
                     print(f"Vous avez gagné 5 pièces d'or! Total: {gold}")
@@ -290,6 +296,10 @@ def main():
                         break
                 else:
                     print(f"Le combat contre le {zone_attaquee.nom} continue!")
+                   
+                if player.pv <= 0:
+                    print("YOU ARE DEAD, PLEASE RESTART")
+                    break
             else:
                 print("Vous devez explorer une zone avant d'attaquer un monstre!")
                 
@@ -302,7 +312,7 @@ def main():
             
         if player.niveau >= 8:
             print("Vous avez atteint le niveau 8! Une nouvelle zone est débloquée avec un ennemi puissant!")
-            ennemi_puissant = EnnemiPuissant("Dragon Ancien", 150, 20)
+            ennemi_puissant = EnnemiPuissant("Dragon Ancien", 500, 50)
             zones.append((ennemi_puissant, ennemi_puissant.nom))
             player.niveau += 1  # Pour éviter que cette condition ne se déclenche à chaque tour
 
