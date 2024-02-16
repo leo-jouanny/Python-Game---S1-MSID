@@ -16,6 +16,10 @@ class Combattant:
         self.pv = pv
         self.attaque = attaque
         self.arme = None
+        self.competence_magique = None
+        self.niveau = 1  # Niveau initial
+        self.experience = 0  # Expérience initiale
+
 
     def subi(self, ennemi):
         degats_subis = ennemi.attaque
@@ -23,10 +27,15 @@ class Combattant:
             degats_subis -= self.arme.degats_supplementaires
         self.pv -= degats_subis
         print(f"{self.pseudo} subit {degats_subis} de dégâts. Il lui reste {self.pv} PV.")
-
+        self.gagner_experience()  # Appel de la fonction pour gagner de l'expérience
+        
     def acheter_arme(self, arme):
         self.arme = arme
         print(f"{self.pseudo} a acheté {arme.nom} qui fait {arme.degats_supplementaires} dégâts supplémentaires pendant {arme.duree} tours.")
+
+    def acheter_competence_magique(self, competence_magique):
+        self.competence_magique = competence_magique
+        print(f"{self.pseudo} a acheté la compétence magique {competence_magique.nom} qui inflige {competence_magique.degats} dégâts.")
 
     def potion_magique(self):
         chance = random.randint(1, 100)
@@ -35,11 +44,24 @@ class Combattant:
             self.pv += vie_gagnee
             print(f"{self.pseudo} utilise une potion magique et récupère {vie_gagnee} PV.")
 
+    def gagner_experience(self):
+        self.experience += 1
+        if self.experience % 4 == 0:  # Si le combattant a gagné 4 expériences (effectué 4 attaques)
+            self.niveau += 1  # Augmentation du niveau
+            self.pv += 5  # Augmentation des points de vie
+            self.attaque += 5  # Augmentation de l'attaque
+            print(f"{self.pseudo} a gagné un niveau! Niveau actuel: {self.niveau}, PV: {self.pv}, Attaque: {self.attaque}.")
+
 class Arme:
     def __init__(self, nom, degats_supplementaires, duree):
         self.nom = nom
         self.degats_supplementaires = degats_supplementaires
         self.duree = duree
+
+class CompetenceMagique:
+    def __init__(self, nom, degats):
+        self.nom = nom
+        self.degats = degats
 
 class PNJ:
     def __init__(self, nom, pv, attaque):
@@ -62,13 +84,27 @@ def choose_character():
     
     if choice == "1":
         return Combattant("Warrior", 100, 10)
-    elif choice == "2": 
-        return Combattant("Mage", 70, 15)
+    elif choice == "2":
+        mage = Combattant("Mage", 70, 15)
+        tourbillon_flamme = CompetenceMagique("Tourbillon de Flamme", 20)
+        mage.acheter_competence_magique(tourbillon_flamme)
+        return mage
     elif choice == "3":
         return Combattant("Archer", 85, 12)
     else:
         print("Invalid choice, defaulting to Warrior")
         return Combattant("Warrior", 100, 10)
+    
+class EnnemiPuissant:
+    def __init__(self, nom, pv, attaque):
+        self.nom = nom
+        self.pv = pv
+        self.attaque = attaque
+
+    def subi(self, combattant):
+        self.pv -= combattant.attaque
+        print(f"{self.nom} subit {combattant.attaque} de dégâts. Il lui reste {self.pv} PV.")
+        return self.pv <= 0    
 
 def main():
     print("Bienvenue dans le donjon!")
@@ -87,6 +123,8 @@ def main():
     hache = Arme("Hache", 12, 3)
     baton_feu = Arme("Baton de Feu", 15, 4)
     tueuse_dragon = Arme("Tueuse de Dragon", 1000, 1)  # Arme spéciale pour tuer le dragon
+    
+    izanagi = CompetenceMagique("Izanagi", 25)  # Nouvelle compétence magique
     
     ennemis = [
         PNJ("Squelette", 50, 7),
@@ -108,9 +146,10 @@ def main():
         print("\nQue voulez-vous faire?")
         print("1. Explorer")
         print("2. Acheter arme")
-        print("3. Utiliser potion")
-        print("4. Attaquer monstre")
-        print("5. Quitter donjon")
+        print("3. Acheter compétence magique")
+        print("4. Utiliser potion")
+        print("5. Attaquer monstre")
+        print("6. Quitter donjon")
         
         action = input("> ")
         
@@ -127,12 +166,12 @@ def main():
                 
         elif action == "2":
             print("Armes disponibles:")
-            print("- Epée (5 dégâts, 3 tours) - 10 pièces d'or")  
-            print("- Marteau (8 dégâts, 2 tours) - 15 pièces d'or")
-            print("- Arche Magique (10 dégâts, 3 tours) - 20 pièces d'or")
-            print("- Hache (12 dégâts, 3 tours) - 25 pièces d'or")
-            print("- Baton de Feu (15 dégâts, 4 tours) - 30 pièces d'or")
-            print("- Tueuse de Dragon (tue le dragon d'un coup) - 50 pièces d'or")
+            print("- Epée (5 dégâts, 3 tours) - 5 pièces d'or")  
+            print("- Marteau (8 dégâts, 2 tours) - 3 pièces d'or")
+            print("- Arche Magique (10 dégâts, 3 tours) - 3 pièces d'or")
+            print("- Hache (12 dégâts, 3 tours) - 7 pièces d'or")
+            print("- Baton de Feu (15 dégâts, 4 tours) - 10 pièces d'or")
+            print("- Tueuse de Dragon (Tue instantanément le dragon) - 35 pièces d'or")
             achat = input("Que voulez-vous acheter (ou rien) ? ")
             if achat == "Epée":
                 if gold >= 5:
@@ -190,7 +229,7 @@ def main():
                         print("Vous avez déjà une arme équipée!")
                     else:
                         player.acheter_arme(tueuse_dragon)
-                        gold -= 35  # Déduire le coût de l'arme achetée
+                        gold -= 35 # Déduire le coût de l'arme achetée
                         print(f"Vous avez acheté la Tueuse de Dragon! Il vous reste {gold} pièces d'or.")
                 else:
                     print("Vous n'avez pas assez de pièces d'or pour acheter cette arme!")
@@ -198,9 +237,42 @@ def main():
                 print("Arme inconnue!")
                 
         elif action == "3":
-            player.potion_magique()
+            if isinstance(player, Combattant) and player.pseudo == "Mage":
+                print("Compétences magiques disponibles:")
+                print("- Tourbillon de Flamme (20 dégâts) - 15 pièces d'or")
+                print("- Izanagi (25 dégâts) - 20 pièces d'or")  # Affichage de la nouvelle compétence magique
+                achat = input("Que voulez-vous acheter (ou rien) ? ")
+                if achat == "Tourbillon de Flamme":
+                    if gold >= 15:
+                        if player.competence_magique:
+                            print("Vous avez déjà une compétence magique!")
+                        else:
+                            tourbillon_flamme = CompetenceMagique("Tourbillon de Flamme", 20)
+                            player.acheter_competence_magique(tourbillon_flamme)
+                            gold -= 15  # Déduire le coût de la compétence magique achetée
+                            print(f"Vous avez acheté le Tourbillon de Flamme! Il vous reste {gold} pièces d'or.")
+                    else:
+                        print("Vous n'avez pas assez de pièces d'or pour acheter cette compétence magique!")
+                elif achat == "Izanagi":
+                    if gold >= 20:
+                        if player.competence_magique:
+                            print("Vous avez déjà une compétence magique!")
+                        else:
+                            izanagi = CompetenceMagique("Izanagi", 25)
+                            player.acheter_competence_magique(izanagi)
+                            gold -= 20  # Déduire le coût de la compétence magique achetée
+                            print(f"Vous avez acheté Izanagi! Il vous reste {gold} pièces d'or.")
+                    else:
+                        print("Vous n'avez pas assez de pièces d'or pour acheter cette compétence magique!")
+                elif achat:
+                    print("Compétence magique inconnue!")
+            else:
+                print("Vous n'avez pas accès à cette fonctionnalité!")
             
         elif action == "4":
+            player.potion_magique()
+            
+        elif action == "5":
             if choix_zone:  # Si le joueur a sélectionné une zone valide
                 zone_attaquee, _ = zones[choix_zone - 1]
                 player.subi(zone_attaquee)
@@ -221,12 +293,18 @@ def main():
             else:
                 print("Vous devez explorer une zone avant d'attaquer un monstre!")
                 
-        elif action == "5":
+        elif action == "6":
             print("Vous quittez le donjon, à bientôt!")
             break
             
         else:
             print("Action invalide!")
             
+        if player.niveau >= 8:
+            print("Vous avez atteint le niveau 8! Une nouvelle zone est débloquée avec un ennemi puissant!")
+            ennemi_puissant = EnnemiPuissant("Dragon Ancien", 150, 20)
+            zones.append((ennemi_puissant, ennemi_puissant.nom))
+            player.niveau += 1  # Pour éviter que cette condition ne se déclenche à chaque tour
+
 if __name__ == "__main__":
     main()
